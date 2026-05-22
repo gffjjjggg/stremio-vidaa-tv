@@ -4325,69 +4325,22 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
     }
 
     function showRecoveryToast(video) {
-        // Non-blocking corner toast with action buttons — user is never trapped.
+        // Simple text-only message (buttons don't render reliably on some VIDAA models)
         var existing = document.getElementById('__rebuffer-toast');
         if (existing) existing.remove();
         var toast = document.createElement('div');
         toast.id = '__rebuffer-toast';
         toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);' +
-            'background:rgba(0,0,0,0.9);color:#fff;padding:12px 18px;border-radius:10px;' +
-            'font-size:14px;z-index:99999;display:flex;flex-direction:column;gap:10px;' +
-            'font-family:PlusJakartaSans,sans-serif;max-width:440px;text-align:center;';
+            'background:rgba(0,0,0,0.92);color:#fff;padding:16px 24px;border-radius:10px;' +
+            'font-size:16px;z-index:99999;font-family:sans-serif;max-width:500px;text-align:center;line-height:1.5;';
 
         var msg = document.createElement('div');
-        msg.textContent = 'Playback keeps stalling. You can pick another stream — or try one of these.';
+        msg.textContent = 'Stream is stalling. Try a 1080p or MP4 version instead of 4K MKV. Or use Yellow button to try native player.';
         toast.appendChild(msg);
 
-        var row = document.createElement('div');
-        row.style.cssText = 'display:flex;gap:8px;justify-content:center;flex-wrap:wrap;';
-
-        function mkBtn(label, color) {
-            var b = document.createElement('button');
-            b.textContent = label;
-            b.style.cssText = 'background:' + color + ';color:#fff;border:none;border-radius:8px;' +
-                'padding:8px 14px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;';
-            b.setAttribute('tabindex', '0');
-            b.onfocus = function() { this.style.outline = '2px solid #fff'; };
-            b.onblur = function() { this.style.outline = 'none'; };
-            return b;
-        }
-
-        var hasNative = false;
-        try { hasNative = typeof omi_platform !== 'undefined' && typeof omi_platform.sendPlatformMessage === 'function'; } catch(e) {}
-
-        if (hasNative) {
-            var nativeBtn = mkBtn('Native Player', '#7b5bf5');
-            nativeBtn.onclick = function() {
-                if (!window.__launchNativePlayer) { toast.remove(); return; }
-                // H5: keep the toast until we know whether the native player
-                // actually opened. On failure, resume browser playback + advise.
-                nativeBtn.textContent = 'Trying…';
-                nativeBtn.disabled = true;
-                var v = (typeof video !== 'undefined' && video) ? video : document.querySelector('video');
-                var src = v ? v.currentSrc || v.src : null;
-                Promise.resolve(window.__launchNativePlayer(src)).then(function(opened) {
-                    if (opened) {
-                        toast.remove();
-                    } else {
-                        toast.remove();
-                        if (typeof window.__recoverAfterFailedHandoff === 'function') {
-                            window.__recoverAfterFailedHandoff(v);
-                        }
-                    }
-                });
-            };
-            row.appendChild(nativeBtn);
-        }
-
-        var dismiss = mkBtn('Keep Trying', 'rgba(255,255,255,0.12)');
-        dismiss.onclick = function() { toast.remove(); };
-        row.appendChild(dismiss);
-
-        toast.appendChild(row);
         document.body.appendChild(toast);
-        // Auto-hide after 12s
-        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 12000);
+        // Auto-hide after 10s
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 10000);
     }
 
     function attemptRebuffer(video) {
