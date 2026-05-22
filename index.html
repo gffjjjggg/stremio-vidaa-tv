@@ -1109,6 +1109,12 @@
         return Promise.resolve(true);
     };
 
+    // BLUE button (406) — show omi_platform API info
+    document.addEventListener('keydown', function(e) {
+        if (e.keyCode !== 406) return;  // BLUE button
+        window.__showOmiPlatformOnScreen();
+    });
+
     // Yellow button (405) — launch native player with current stream.
     // Always bind; check omi_platform at press time so later-injected APIs still work.
     document.addEventListener('keydown', function(e) {
