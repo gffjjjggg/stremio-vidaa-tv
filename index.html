@@ -4719,6 +4719,41 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 })();
 </script>
 
+<!-- #23: Ultra-Simple Stall Recovery (always active) -->
+<script>
+(function() {
+    // Simplest possible stall detection - always running, no initialization needed
+    var lastTime = null;
+    var stallCount = 0;
+
+    setInterval(function() {
+        var video = document.querySelector('video');
+        if (!video || video.paused || video.ended) {
+            lastTime = null;
+            stallCount = 0;
+            return;
+        }
+
+        // If currentTime hasn't changed in 8 seconds while playing = stall
+        if (lastTime !== null && video.currentTime === lastTime) {
+            stallCount++;
+            if (stallCount >= 4) {  // 4 * 2sec = 8 seconds
+                console.log('[simple-stall] Detected freeze, seeking forward...');
+                var newTime = video.currentTime + 1;
+                if (newTime < video.duration) {
+                    video.currentTime = newTime;
+                    stallCount = 0;
+                }
+            }
+        } else {
+            stallCount = 0;
+        }
+
+        lastTime = video.currentTime;
+    }, 2000);
+})();
+</script>
+
 <!-- #22: Stream Stats Overlay -->
 <script>
 (function() {
