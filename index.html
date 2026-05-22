@@ -4952,58 +4952,6 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 })();
 </script>
 <script>
-/* Inject Buffer Fix Version into Settings > About panel
- * This adds "Buffer Fix v1" under the Theater v1.9.2 version display
- */
-(function() {
-    function injectBufferFixVersion() {
-        // Look for the version display in Settings > About
-        // Match text like "Theater v1.9.2" or similar version strings
-        var allText = document.body.innerText || '';
-        if (allText.indexOf('About') > -1 || allText.indexOf('Theater') > -1) {
-            // Find all divs and text nodes that might contain version info
-            var allElements = document.querySelectorAll('div, span, p');
-            for (var i = 0; i < allElements.length; i++) {
-                var el = allElements[i];
-                var text = (el.textContent || '').trim();
-
-                // Look for Theater version line
-                if (text.indexOf('Theater') !== -1 && text.indexOf('1.9.2') !== -1) {
-                    // Check if we already added it
-                    if (text.indexOf('Buffer Fix') !== -1) return;
-
-                    // Create version display
-                    var bufferFixDiv = document.createElement('div');
-                    bufferFixDiv.style.cssText = 'margin-top:8px;color:rgba(255,255,255,0.8);font-size:14px;';
-                    bufferFixDiv.textContent = 'Buffer Fix v' + (window.__BUFFER_FIX_VERSION__ || '1');
-
-                    // Insert after the Theater version line
-                    if (el.nextSibling) {
-                        el.parentNode.insertBefore(bufferFixDiv, el.nextSibling);
-                    } else {
-                        el.parentNode.appendChild(bufferFixDiv);
-                    }
-                    return true;
-                }
-            }
-        }
-    }
-
-    // Try immediately
-    injectBufferFixVersion();
-
-    // Watch for DOM changes and inject when About panel opens
-    var observer = new MutationObserver(function() {
-        injectBufferFixVersion();
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-})();
-</script>
-<script>
 /* Have existing pollers honour __QUIET_PLAYER_ACTIVE__.
  *
  * The individual patches higher up in this file were not modified to
