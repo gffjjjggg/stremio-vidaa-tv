@@ -22,21 +22,27 @@
   const BLOCKED_CODECS = ['hevc', 'h265', 'x265', 'dvhe', 'hdr'];
   const ALLOWED_CODECS = ['h264', 'avc'];
 
-  // Patch 1: Override codec selection to blacklist HEVC
+  // Patch 1: Override codec selection to blacklist HEVC + block MKV container
   const originalCanPlayType = HTMLVideoElement.prototype.canPlayType;
   HTMLVideoElement.prototype.canPlayType = function(type) {
     const typeStr = (type || '').toLowerCase();
-    
+
+    // FORCE: Block MKV container entirely - force native player
+    if (typeStr.includes('matroska') || typeStr.includes('mkv') || typeStr.includes('x-matroska')) {
+      console.log('[vidaa-fix] Blocking MKV in browser - forcing native player:', type);
+      return '';
+    }
+
     // Block HEVC codecs
     if (BLOCKED_CODECS.some(codec => typeStr.includes(codec))) {
       return '';
     }
-    
+
     // Allow H.264/AVC
     if (ALLOWED_CODECS.some(codec => typeStr.includes(codec))) {
       return originalCanPlayType.call(this, type);
     }
-    
+
     return originalCanPlayType.call(this, type);
   };
 
