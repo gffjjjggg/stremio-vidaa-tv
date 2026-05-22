@@ -4299,9 +4299,17 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
         log('Stall detected (retry', retries, '/ ' + MAX_RETRIES + ')');
 
         if (retries > MAX_RETRIES) {
-            log('Max retries reached — offering recovery options');
-            showRecoveryToast(video);
-            // Reset so we try again if the user keeps waiting — never leave them stuck.
+            log('Max retries reached — attempting native player handoff');
+            var hasNative = false;
+            try { hasNative = typeof omi_platform !== 'undefined' && typeof omi_platform.sendPlatformMessage === 'function'; } catch(e) {}
+
+            if (hasNative && window.__launchNativePlayer) {
+                log('Auto-launching native player');
+                window.__launchNativePlayer();
+            } else {
+                log('Native player unavailable — showing recovery toast');
+                showRecoveryToast(video);
+            }
             resetStall();
             return;
         }
@@ -4343,7 +4351,20 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
             video.addEventListener('seeked', resetStall);
         }
 
-        if (video.paused || video.ended || video.readyState < 2) {
+        // Standard guard: only measure time when actively playing with data
+        if (video.paused || video.ended) {
+            lastTime = video.currentTime;
+            return;
+        }
+
+        // BUG FIX: Also detect mid-stream stalls (readyState < 3 while playing)
+        // The original code bailed when readyState < 2, but during CDN timeout,
+        // readyState drops to 1-2 while video.currentTime freezes — never detected.
+        var midStreamStall = !video.paused && !video.ended
+            && video.readyState < 3          // insufficient future data
+            && video.currentTime > 5;        // has actually started playing
+
+        if (!midStreamStall && video.readyState < 2) {
             lastTime = video.currentTime;
             return;
         }
@@ -4983,6 +5004,33 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
     // check window.__QUIET_PLAYER_ACTIVE__ at the top of their callbacks
     // going forward when we add new ones.
     void _origSetInterval;
+})();
+</script>
+<script>
+/* HTTP keep-alive for VIDAA CDN streams
+ * VIDAA's browser drops HTTP connections after ~40s idle.
+ * This pings the active stream URL every 25s with a 1-byte range request,
+ * which keeps the TCP connection alive without affecting playback.
+ */
+(function() {
+    function inPlayerRoute() {
+        return (window.location.hash || '').indexOf('#/player/') === 0;
+    }
+
+    setInterval(function() {
+        if (!inPlayerRoute()) return;
+        var video = document.querySelector('video');
+        if (!video || !video.src || video.paused || video.ended) return;
+
+        var url = video.currentSrc || video.src;
+        if (!url || url.startsWith('blob:') || url.startsWith('data:')) return;
+
+        fetch(url, {
+            method: 'GET',
+            headers: { 'Range': 'bytes=0-0' },
+            cache: 'no-store'
+        }).catch(function() {});
+    }, 25000);
 })();
 </script>
 

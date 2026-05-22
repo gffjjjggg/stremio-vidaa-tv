@@ -99,14 +99,16 @@
     }
   }
 
-  // Patch 3: Override fetch for stream requests with caching
+  // Patch 3: Override fetch for stream requests (keep-alive + priority, no force-cache)
+  // NOTE: force-cache was breaking Real-Debrid URLs (short-lived signed links)
   const originalFetch = window.fetch;
   window.fetch = function(url, options) {
     if (typeof url === 'string' && (url.includes('.m3u8') || url.includes('.mp4') || url.includes('stream'))) {
       options = options || {};
-      options.cache = options.cache || 'force-cache';
-      options.keepalive = options.keepalive !== false;
+      // Keep connection alive and prioritize stream requests
+      options.keepalive = true;
       options.priority = options.priority || 'high';
+      // REMOVED: force-cache — it was breaking Real-Debrid's signed CDN links
     }
     return originalFetch.apply(this, arguments);
   };
