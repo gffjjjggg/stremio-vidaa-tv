@@ -48,7 +48,7 @@
     // XSS escape helper for dynamic innerHTML values
     function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
     </script>
-    <!-- <script src="vidaa-buffering-fixes.js"></script> DISABLED for testing -->
+    <script src="vidaa-buffering-fixes.js"></script>
     <script>
     // VIDAA keyboard fix v5 — intercept programmatic input.value changes
     // The VIDAA system keyboard sets input.value directly without firing DOM events.
