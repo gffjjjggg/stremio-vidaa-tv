@@ -41,29 +41,42 @@
   };
 
   // Patch 2: Hook into video element creation to set optimal properties
+  // Only observe when in player route to avoid UI freezes
   const MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-  if (MutationObserver) {
-    const observer = new MutationObserver(function(mutations) {
+  var observer = null;
+
+  function startObserver() {
+    if (observer) return;
+    observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.addedNodes.length) {
           mutation.addedNodes.forEach(function(node) {
-            if (node.nodeType === 1) { // Element node
+            if (node.nodeType === 1) {
               const videos = node.querySelectorAll ? node.querySelectorAll('video') : [];
               videos.forEach(configureVideoElement);
-              
-              if (node.tagName === 'VIDEO') {
-                configureVideoElement(node);
-              }
+              if (node.tagName === 'VIDEO') configureVideoElement(node);
             }
           });
         }
       });
     });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+  function stopObserver() {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
+
+  // Only observe in player route
+  if (MutationObserver) {
+    setInterval(function() {
+      var inPlayer = (window.location.hash || '').indexOf('#/player/') === 0;
+      if (inPlayer) startObserver();
+      else stopObserver();
+    }, 1000);
   }
 
   function configureVideoElement(video) {
