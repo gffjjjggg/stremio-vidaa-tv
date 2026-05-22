@@ -180,7 +180,8 @@
     } catch (e) {}
   }, 60000);
 
-  // Patch 9: Log configuration on load
+  // Patch 9: Mark that buffer fix loaded (visible indicator)
+  window.__BUFFER_FIX_ACTIVE__ = true;
   document.addEventListener('DOMContentLoaded', function() {
     console.log('VIDAA Stremio Patches Applied (55E77KQ Enhanced):');
     console.log('✓ HEVC/H.265 codec blacklisted');
