@@ -4621,27 +4621,6 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
     }
 
     init();
-
-    // DEBUG: Periodic check for monitoring status (every 2 seconds)
-    setInterval(function() {
-        var hash = window.location.hash || '';
-        var inPlayer = hash.indexOf('#/player/') === 0;
-        var indicator = document.getElementById('__rebuffer-indicator');
-
-        if (inPlayer) {
-            if (!indicator) {
-                indicator = document.createElement('div');
-                indicator.id = '__rebuffer-indicator';
-                indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,150,0,0.8);color:#fff;padding:10px 14px;border-radius:4px;font-size:13px;z-index:99998;font-family:monospace;font-weight:bold;';
-                indicator.innerHTML = '[MONITOR ON]<br/>Hash: ' + hash.substring(0, 20);
-                document.body.appendChild(indicator);
-            } else {
-                indicator.innerHTML = '[MONITOR ON]<br/>Hash: ' + hash.substring(0, 20);
-            }
-        } else {
-            if (indicator) indicator.remove();
-        }
-    }, 2000);
 })();
 </script>
 
@@ -5118,6 +5097,12 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 (function() {
     var LS_KEY_ALL = 'stremio_auto_native_player';
     var LS_KEY_MKV = 'stremio_auto_native_player_mkv';
+
+    // FORCE ENABLE: Auto Native Player for MKV by default (55E77KQ compatibility)
+    if (localStorage.getItem(LS_KEY_MKV) === null) {
+        localStorage.setItem(LS_KEY_MKV, 'true');
+    }
+
     function modeAll() { return localStorage.getItem(LS_KEY_ALL) === 'true'; }
     function modeMkvOnly() { return localStorage.getItem(LS_KEY_MKV) === 'true'; }
 
