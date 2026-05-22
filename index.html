@@ -4387,6 +4387,46 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
         retries = 0;
     }
 
+    function showDiagnosticsOverlay() {
+        var existing = document.getElementById('__diag-overlay');
+        if (existing) existing.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = '__diag-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);color:#0f0;' +
+            'padding:20px;overflow:auto;z-index:99998;font-family:monospace;font-size:13px;line-height:1.6;';
+
+        try {
+            var stored = localStorage.getItem('__native_diag_log');
+            var logs = stored ? JSON.parse(stored) : [];
+
+            var html = '=== NATIVE PLAYER DIAGNOSTICS ===<br/>Total attempts: ' + logs.length + '<br/><br/>';
+            if (logs.length === 0) {
+                html += 'No attempts yet.';
+            } else {
+                logs.slice(-20).forEach(function(log) {
+                    var time = new Date(log.ts).toLocaleTimeString();
+                    html += '[' + time + '] ' + log.action + ': ' + log.msg + ' → ' + (log.result || '?') + '<br/>';
+                });
+            }
+            html += '<br/>Press BACK/EXIT to close<br/>';
+            overlay.innerHTML = html;
+        } catch(e) {
+            overlay.textContent = 'Error reading diagnostics: ' + e.message;
+        }
+
+        document.body.appendChild(overlay);
+
+        // Close on ESC or BACK button
+        var closeHandler = function(e) {
+            if (e.keyCode === 27 || e.key === 'Escape' || e.key === 'Backspace') {
+                if (overlay.parentNode) overlay.remove();
+                document.removeEventListener('keydown', closeHandler);
+            }
+        };
+        document.addEventListener('keydown', closeHandler);
+    }
+
     function showRecoveryToast(video) {
         // Simple text-only message (buttons don't render reliably on some VIDAA models)
         var existing = document.getElementById('__rebuffer-toast');
@@ -4398,12 +4438,24 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
             'font-size:16px;z-index:99999;font-family:sans-serif;max-width:500px;text-align:center;line-height:1.5;';
 
         var msg = document.createElement('div');
-        msg.textContent = 'Stream is stalling. Try a 1080p or MP4 version instead of 4K MKV. Or use Yellow button to try native player.';
+        msg.innerHTML = 'Stream is stalling.<br/>Attempting native player handoff...<br/><br/><span style="font-size:13px;opacity:0.8;">Press GREEN button to see diagnostics.</span>';
         toast.appendChild(msg);
 
         document.body.appendChild(toast);
-        // Auto-hide after 10s
-        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 10000);
+
+        // Show diagnostics overlay when GREEN button is pressed
+        var greenHandler = function(e) {
+            if (e.keyCode === 82 || e.key === 'g' || e.key === 'G') {  // Green button / 'G'
+                showDiagnosticsOverlay();
+            }
+        };
+        document.addEventListener('keydown', greenHandler);
+
+        // Auto-hide after 15s
+        setTimeout(function() {
+            if (toast.parentNode) toast.remove();
+            document.removeEventListener('keydown', greenHandler);
+        }, 15000);
     }
 
     function attemptRebuffer(video) {
@@ -4417,7 +4469,19 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 
             if (hasNative && window.__launchNativePlayer) {
                 log('Auto-launching native player');
-                window.__launchNativePlayer();
+                showRecoveryToast(video);  // Show message immediately
+                // Attempt native player handoff
+                window.__launchNativePlayer().then(function(success) {
+                    var toast = document.getElementById('__rebuffer-toast');
+                    if (toast) {
+                        if (success) {
+                            toast.innerHTML = 'Native player launched! ✓<br/>Check diagnostics: window.__getNativeDiagnostics()';
+                        } else {
+                            toast.innerHTML = 'Native player failed.<br/>Check why: window.__getNativeDiagnostics()<br/><br/><span style="font-size:13px;opacity:0.8;">Try 1080p MP4 instead of 4K MKV.</span>';
+                        }
+                        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 8000);
+                    }
+                });
             } else {
                 log('Native player unavailable — showing recovery toast');
                 showRecoveryToast(video);
