@@ -950,6 +950,74 @@
         });
     };
 
+    window.__inspectOmiPlatform = function() {
+        console.log('=== OMI_PLATFORM INTROSPECTION ===');
+        if (typeof omi_platform === 'undefined') {
+            console.log('omi_platform is NOT defined');
+            return {};
+        }
+        console.log('omi_platform type:', typeof omi_platform);
+        console.log('omi_platform keys:', Object.keys(omi_platform));
+        console.log('Full omi_platform object:', omi_platform);
+
+        // Try to list all methods/properties
+        var info = {};
+        for (var key in omi_platform) {
+            info[key] = typeof omi_platform[key];
+        }
+        console.log('Properties and types:', info);
+        return info;
+    };
+
+    window.__showOmiPlatformOnScreen = function() {
+        var existing = document.getElementById('__omi-info-overlay');
+        if (existing) existing.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = '__omi-info-overlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.95);color:#0f0;' +
+            'padding:20px;overflow:auto;z-index:99998;font-family:monospace;font-size:12px;line-height:1.5;';
+
+        var html = '<h2 style="color:#0f0;margin:0;">OMI_PLATFORM API INSPECTION</h2><br/>';
+
+        if (typeof omi_platform === 'undefined') {
+            html += 'OMI_PLATFORM NOT DEFINED!';
+        } else {
+            html += 'Type: ' + typeof omi_platform + '<br/>';
+            html += 'Keys found:<br/>';
+            var keys = Object.keys(omi_platform);
+            if (keys.length === 0) {
+                html += '[no enumerable keys - object may be sealed]<br/>';
+            } else {
+                keys.forEach(function(k) {
+                    html += '  - ' + k + ': ' + typeof omi_platform[k] + '<br/>';
+                });
+            }
+            html += '<br/>Trying to access sendPlatformMessage:<br/>';
+            html += 'typeof sendPlatformMessage: ' + typeof omi_platform.sendPlatformMessage + '<br/>';
+
+            // Try toString on the function
+            try {
+                html += '<br/>sendPlatformMessage signature:<br/>' +
+                        omi_platform.sendPlatformMessage.toString().substring(0, 200) + '<br/>';
+            } catch(e) {
+                html += 'Could not get signature: ' + e.message + '<br/>';
+            }
+        }
+
+        html += '<br/>Press BACK to close<br/>';
+        overlay.innerHTML = html;
+        document.body.appendChild(overlay);
+
+        var closeHandler = function(e) {
+            if (e.keyCode === 27 || e.key === 'Escape' || e.key === 'Backspace') {
+                if (overlay.parentNode) overlay.remove();
+                document.removeEventListener('keydown', closeHandler);
+            }
+        };
+        document.addEventListener('keydown', closeHandler);
+    };
+
     function logNativeDiagnostic(action, detail, result) {
         if (!window.__diagnosticLogging) return;
         try {
