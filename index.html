@@ -1109,11 +1109,20 @@
         return Promise.resolve(true);
     };
 
-    // BLUE button (406) — show omi_platform API info
-    document.addEventListener('keydown', function(e) {
-        if (e.keyCode !== 406) return;  // BLUE button
-        window.__showOmiPlatformOnScreen();
-    });
+    // Auto-show omi_platform info on player route (for debugging 55E77KQ)
+    var lastShownHash = '';
+    setInterval(function() {
+        var hash = window.location.hash || '';
+        if (hash.indexOf('#/player/') === 0 && hash !== lastShownHash) {
+            lastShownHash = hash;
+            // Show omi_platform info for 8 seconds
+            window.__showOmiPlatformOnScreen();
+            setTimeout(function() {
+                var overlay = document.getElementById('__omi-info-overlay');
+                if (overlay) overlay.remove();
+            }, 8000);
+        }
+    }, 500);
 
     // Yellow button (405) — launch native player with current stream.
     // Always bind; check omi_platform at press time so later-injected APIs still work.
