@@ -116,15 +116,65 @@
     };
   }
 
-  // Patch 6: Log configuration on load
+  // Patch 6: Buffer stall detection and recovery (55E77KQ specific)
+  function setupBufferStallRecovery(video) {
+    let stallCount = 0;
+    let lastStallTime = 0;
+
+    video.addEventListener('stalled', function() {
+      const now = Date.now();
+      if (now - lastStallTime < 1000) stallCount++;
+      else stallCount = 1;
+      lastStallTime = now;
+
+      if (stallCount >= 2) {
+        console.log('VIDAA: Buffer stall detected, attempting recovery');
+        const currentTime = video.currentTime;
+        video.currentTime = currentTime + 0.1;
+      }
+    });
+
+    video.addEventListener('playing', function() {
+      stallCount = 0;
+    });
+  }
+
+  // Patch 7: Video element creation with stall recovery
+  const originalConfigurerVideoElement = configureVideoElement;
+  configureVideoElement = function(video) {
+    originalConfigurerVideoElement(video);
+    setupBufferStallRecovery(video);
+  };
+
+  // Patch 8: Memory cleanup for long sessions
+  setInterval(function() {
+    try {
+      if (window.gc) window.gc();
+      const vids = document.querySelectorAll('video');
+      vids.forEach(function(v) {
+        if (v.paused && v.src) {
+          const bufLen = v.buffered.length;
+          if (bufLen > 0) {
+            console.log('VIDAA: Clearing unused video buffer');
+            v.src = '';
+            v.load();
+          }
+        }
+      });
+    } catch (e) {}
+  }, 60000);
+
+  // Patch 9: Log configuration on load
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('VIDAA Stremio Patches Applied:');
+    console.log('VIDAA Stremio Patches Applied (55E77KQ Enhanced):');
     console.log('✓ HEVC/H.265 codec blacklisted');
     console.log('✓ H.264/AVC codec forced');
     console.log('✓ Video element optimization enabled');
     console.log('✓ HLS stream priority set');
     console.log('✓ Fetch caching configured');
     console.log('✓ MediaSource codec filtering enabled');
+    console.log('✓ Buffer stall recovery enabled');
+    console.log('✓ Memory cleanup enabled');
   });
 
   // Apply patches to any existing video elements
