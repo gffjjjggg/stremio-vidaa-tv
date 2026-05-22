@@ -888,25 +888,29 @@
         var now = Date.now();
         if (now - lastFailToastAt < 6000) return;
         lastFailToastAt = now;
-        var existing = document.getElementById('__handoff-fail-toast');
+        var existing = document.getElementById(‘__handoff-fail-toast’);
         if (existing) existing.remove();
-        var toast = document.createElement('div');
-        toast.id = '__handoff-fail-toast';
-        toast.className = 'dv-honest-toast';
-        toast.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(20,20,20,0.95);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;z-index:99999;font-family:PlusJakartaSans,sans-serif;max-width:460px;text-align:center;line-height:1.4;display:flex;flex-direction:column;gap:8px;';
-        var msg = document.createElement('div');
-        msg.textContent = 'The TV’s built-in player didn’t open — resuming here. This stream may be too heavy for the TV browser; try a 1080p or MP4 version of this title.';
+        var toast = document.createElement(‘div’);
+        toast.id = ‘__handoff-fail-toast’;
+        toast.className = ‘dv-honest-toast’;
+        toast.style.cssText = ‘position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(20,20,20,0.95);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;z-index:99999;font-family:sans-serif;max-width:460px;text-align:center;line-height:1.4;’;
+        var msg = document.createElement(‘div’);
+        msg.innerHTML = ‘Native player failed.<br/>Try 1080p or MP4 instead of 4K MKV.<br/><span style="font-size:12px;opacity:0.8;">Press GREEN for diagnostics.</span>’;
         toast.appendChild(msg);
-        var btn = document.createElement('button');
-        btn.textContent = 'OK';
-        btn.style.cssText = 'background:rgba(255,255,255,0.14);color:#fff;border:none;border-radius:8px;padding:6px 16px;font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;align-self:center;';
-        btn.setAttribute('tabindex', '0');
-        btn.onfocus = function() { this.style.outline = '2px solid #fff'; };
-        btn.onblur = function() { this.style.outline = 'none'; };
-        btn.onclick = function() { toast.remove(); };
-        toast.appendChild(btn);
+
+        // Show diagnostics overlay when GREEN button is pressed
+        var greenHandler = function(e) {
+            if (e.keyCode === 82 || e.key === ‘g’ || e.key === ‘G’) {  // Green button / ‘G’
+                if (toast.parentNode) showDiagnosticsOverlay();
+            }
+        };
+        document.addEventListener(‘keydown’, greenHandler);
+
         document.body.appendChild(toast);
-        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 9000);
+        setTimeout(function() {
+            if (toast.parentNode) toast.remove();
+            document.removeEventListener(‘keydown’, greenHandler);
+        }, 8000);
     };
 
     // Diagnostic logging for native player testing
