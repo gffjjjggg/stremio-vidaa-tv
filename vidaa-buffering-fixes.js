@@ -18,17 +18,6 @@
   // Set buffer fix version for diagnostics
   window.__BUFFER_FIX_VERSION__ = '1';
 
-  // Check if buffer fix is enabled (default: true)
-  var isEnabled = function() {
-    var val = localStorage.getItem('stremio_buffer_fix_enabled');
-    return val === null || val === 'true'; // default true if not set
-  };
-
-  if (!isEnabled()) {
-    console.log('[buffer-fix] Disabled in settings');
-    return;
-  }
-
   // Blacklist problematic codecs
   const BLOCKED_CODECS = ['hevc', 'h265', 'x265', 'dvhe', 'hdr'];
   const ALLOWED_CODECS = ['h264', 'avc'];
