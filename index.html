@@ -895,16 +895,16 @@
         toast.className = ‘dv-honest-toast’;
         toast.style.cssText = ‘position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(20,20,20,0.95);color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;z-index:99999;font-family:sans-serif;max-width:460px;text-align:center;line-height:1.4;’;
         var msg = document.createElement(‘div’);
-        msg.innerHTML = ‘Native player failed.<br/>Try 1080p or MP4 instead of 4K MKV.<br/><span style="font-size:12px;opacity:0.8;">Press GREEN for diagnostics.</span>’;
+        msg.innerHTML = ‘Native player failed.<br/>Try 1080p or MP4 instead of 4K MKV.<br/><span style="font-size:12px;opacity:0.8;">Press RED for diagnostics.</span>’;
         toast.appendChild(msg);
 
-        // Show diagnostics overlay when GREEN button is pressed
-        var greenHandler = function(e) {
-            if (e.keyCode === 82 || e.key === ‘g’ || e.key === ‘G’) {  // Green button / ‘G’
+        // Show diagnostics overlay when RED button is pressed
+        var redHandler = function(e) {
+            if (e.keyCode === 114 || e.key === ‘r’ || e.key === ‘R’) {  // Red button / ‘R’
                 if (toast.parentNode) showDiagnosticsOverlay();
             }
         };
-        document.addEventListener(‘keydown’, greenHandler);
+        document.addEventListener(‘keydown’, redHandler);
 
         document.body.appendChild(toast);
         setTimeout(function() {
@@ -4413,7 +4413,7 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
                     html += '[' + time + '] ' + log.action + ': ' + log.msg + ' → ' + (log.result || '?') + '<br/>';
                 });
             }
-            html += '<br/>Press BACK/EXIT to close<br/>';
+            html += '<br/>Press BACK or EXIT to close<br/>';
             overlay.innerHTML = html;
         } catch(e) {
             overlay.textContent = 'Error reading diagnostics: ' + e.message;
