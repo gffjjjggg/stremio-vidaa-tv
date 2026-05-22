@@ -1069,6 +1069,7 @@
         return {
             build: window.__BUILD_COMMIT__ || null,
             patchVersion: window.__STREMIO_PATCH_VERSION__ || null,
+            bufferFixVersion: window.__BUFFER_FIX_VERSION__ || null,
             href: window.location.href,
             origin: window.location.origin,
             host: window.location.host,
@@ -1282,6 +1283,7 @@
         var diag = {
             build: window.__BUILD_COMMIT__ || null,
             patchVersion: window.__STREMIO_PATCH_VERSION__ || null,
+            bufferFixVersion: window.__BUFFER_FIX_VERSION__ || null,
             timestamp: new Date().toISOString(),
             href: window.location.href,
             hash: window.location.hash,

@@ -15,6 +15,9 @@
 (function() {
   'use strict';
 
+  // Set buffer fix version for diagnostics
+  window.__BUFFER_FIX_VERSION__ = '1';
+
   // Blacklist problematic codecs
   const BLOCKED_CODECS = ['hevc', 'h265', 'x265', 'dvhe', 'hdr'];
   const ALLOWED_CODECS = ['h264', 'avc'];
