@@ -883,9 +883,7 @@
                 if (p && typeof p.catch === 'function') p.catch(function() {});
             }
         } catch(e) {}
-        // Always silent — don't show error messages about native player
-        // Just resume in browser player without distracting the user
-        return;
+        if (opts.silent) return;
         // Throttle toasts so repeated stalls don't spam.
         var now = Date.now();
         if (now - lastFailToastAt < 6000) return;
@@ -919,10 +917,10 @@
             : (window.__NATIVE_VERIFY_TIMEOUT_MS__ != null ? window.__NATIVE_VERIFY_TIMEOUT_MS__ : DEFAULT_VERIFY_MS);
         var watchedDelay = opts.watchedDelayMs != null ? opts.watchedDelayMs : DEFAULT_WATCHED_DELAY_MS;
 
-        // Disable native player entirely — it doesn't work reliably on all VIDAA models
-        // including some that report omi_platform is available but the handoff fails
-        console.log('[native] Native player disabled — using browser player only');
-        return Promise.resolve(false);
+        if (!hasNative()) {
+            console.log('[native] omi_platform unavailable');
+            return Promise.resolve(false);
+        }
         if (!url) {
             var video = document.querySelector('video');
             url = video ? video.currentSrc || video.src : null;
@@ -936,12 +934,16 @@
         // Arm verification BEFORE sending so we don't miss a fast backgrounding.
         var verifyPromise = verifyBackgrounding(verifyMs);
 
-        // Fire-and-forget — try every message type; swallow throws. Sending says
-        // NOTHING about whether the native player actually opened.
+        // Fire-and-forget — try MANY message types since different VIDAA models respond to different formats
         var messages = [
             {type: 'launchNativePlayer', url: url, title: title, mimeType: mimeType},
-            {type: 'openMediaPlayer', url: url, title: title},
-            {type: 'playVideo', url: url, mimeType: mimeType, title: title}
+            {type: 'openMediaPlayer', url: url, title: title, mimeType: mimeType},
+            {type: 'playVideo', url: url, mimeType: mimeType, title: title},
+            // Try alternative formats that might work on specific TV models
+            {type: 'mediaPlayer_open', url: url, title: title, mimeType: mimeType},
+            {type: 'native_player', url: url, title: title, mimeType: mimeType},
+            {action: 'play', url: url, title: title, type: 'video'},
+            {cmd: 'play', url: url, title: title}
         ];
         for (var i = 0; i < messages.length; i++) {
             try {
