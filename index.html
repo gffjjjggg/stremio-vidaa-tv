@@ -1087,8 +1087,20 @@
             }
         }
 
-        // For 55E77KQ: native player may launch without hiding browser tab.
-        // Skip verification and assume success if messages sent without errors.
+        // For 55E77KQ: try Hisense_CloseBrowser as fallback to trigger native player
+        console.log('[native] Attempting closeOTTPage fallback for 55E77KQ');
+        logNativeDiagnostic('fallback', 'Trying Hisense_CloseBrowser()', 'sent');
+        try {
+            if (typeof Hisense_CloseBrowser === 'function') {
+                Hisense_CloseBrowser('Stremio');
+                console.log('[native] Hisense_CloseBrowser called successfully');
+                logNativeDiagnostic('fallback', 'Hisense_CloseBrowser', 'SUCCESS');
+            }
+        } catch(e) {
+            console.log('[native] Hisense_CloseBrowser error:', e.message);
+            logNativeDiagnostic('fallback', 'Hisense_CloseBrowser', 'error: ' + e.message);
+        }
+
         console.log('[native] Assuming native player opened (55E77KQ: verification skipped)');
         logNativeDiagnostic('verification', 'Skipped (55E77KQ compatibility)', 'ASSUMED_SUCCESS');
 
