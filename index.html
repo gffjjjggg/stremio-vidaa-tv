@@ -4952,42 +4952,15 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 })();
 </script>
 <script>
-/* Lightweight Buffer Fix version display for Settings > About
- * Runs once per route change, minimal performance impact
+/* Add Buffer Fix version to page globally via window object
+ * Accessible in diagnostics and console
  */
 (function() {
-    var lastHash = '';
-    var injected = false;
+    // Make it visible globally
+    window.__STREMIO_BUFFER_FIX_VERSION__ = 'v1';
 
-    function tryInject() {
-        var hash = window.location.hash || '';
-        if (hash.indexOf('#/settings/about') === -1) {
-            injected = false;
-            return;
-        }
-        if (injected) return;
-
-        var divs = document.querySelectorAll('div');
-        for (var i = 0; i < divs.length; i++) {
-            var text = divs[i].textContent || '';
-            if (text.indexOf('Theater') > -1 && text.indexOf('1.9.2') > -1 && text.indexOf('Buffer Fix') === -1) {
-                var versionDiv = document.createElement('div');
-                versionDiv.textContent = 'Buffer Fix v1';
-                versionDiv.style.cssText = 'margin-top:6px;opacity:0.8;';
-                divs[i].parentNode.insertBefore(versionDiv, divs[i].nextSibling);
-                injected = true;
-                return;
-            }
-        }
-    }
-
-    setInterval(function() {
-        var hash = window.location.hash || '';
-        if (hash !== lastHash) {
-            lastHash = hash;
-            tryInject();
-        }
-    }, 500);
+    // Log to console for verification
+    console.log('[buffer-fix] Version 1 loaded. Check window.__STREMIO_BUFFER_FIX_VERSION__');
 })();
 </script>
 <script>
