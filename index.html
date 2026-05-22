@@ -909,6 +909,62 @@
         setTimeout(function() { if (toast.parentNode) toast.remove(); }, 9000);
     };
 
+    // Diagnostic logging for native player testing
+    // Access with: window.__getNativeDiagnostics()
+    window.__nativeDiagLog = [];
+    window.__diagnosticLogging = true;
+    window.__getNativeDiagnostics = function() {
+        try {
+            var stored = localStorage.getItem('__native_diag_log');
+            var logs = stored ? JSON.parse(stored) : [];
+            console.log('=== NATIVE PLAYER DIAGNOSTICS ===');
+            console.log('Total attempts:', logs.length);
+            logs.forEach(function(log, i) {
+                var time = new Date(log.ts).toLocaleTimeString();
+                console.log(i + 1 + '. [' + time + '] ' + log.action + ': ' + (log.result || log.msg));
+            });
+            return logs;
+        } catch(e) {
+            console.log('Diagnostic log error:', e.message);
+            return [];
+        }
+    };
+    window.__clearNativeDiagnostics = function() {
+        localStorage.removeItem('__native_diag_log');
+        window.__nativeDiagLog = [];
+        console.log('Diagnostics cleared');
+    };
+
+    window.__testNativePlayer = function() {
+        console.log('Testing native player handoff...');
+        logNativeDiagnostic('test', 'User triggered test', 'start');
+        var v = document.querySelector('video');
+        var url = v ? (v.currentSrc || v.src) : 'test://stream';
+        window.__launchNativePlayer(url).then(function(result) {
+            console.log('Native player test result:', result);
+            logNativeDiagnostic('test', 'Test result: ' + result, result ? 'SUCCESS' : 'FAILED');
+        });
+    };
+
+    function logNativeDiagnostic(action, detail, result) {
+        if (!window.__diagnosticLogging) return;
+        try {
+            var entry = {
+                ts: new Date().toISOString(),
+                action: action,
+                msg: detail,
+                result: result
+            };
+            window.__nativeDiagLog.push(entry);
+            var stored = localStorage.getItem('__native_diag_log') || '[]';
+            var logs = JSON.parse(stored);
+            logs.push(entry);
+            // Keep last 50 entries to avoid bloating localStorage
+            if (logs.length > 50) logs = logs.slice(-50);
+            localStorage.setItem('__native_diag_log', JSON.stringify(logs));
+        } catch(e) {}
+    }
+
     // The ONE launcher. Returns Promise<boolean> = verified opened?
     // opts: { verifyTimeoutMs, watchedDelayMs } (test/override hooks)
     window.__launchNativePlayer = function(url, opts) {
@@ -947,19 +1003,26 @@
         ];
         for (var i = 0; i < messages.length; i++) {
             try {
-                omi_platform.sendPlatformMessage(JSON.stringify(messages[i]));
-                console.log('[native] Sent (unacked):', messages[i].type);
+                var msgStr = JSON.stringify(messages[i]);
+                omi_platform.sendPlatformMessage(msgStr);
+                var msgType = messages[i].type || messages[i].action || messages[i].cmd;
+                console.log('[native] Sent (unacked):', msgType);
+                logNativeDiagnostic('sendPlatformMessage', 'Format: ' + msgType, 'sent');
             } catch(e) {
-                console.log('[native] Send threw:', messages[i].type, e.message);
+                var msgType = messages[i].type || messages[i].action || messages[i].cmd;
+                console.log('[native] Send threw:', msgType, e.message);
+                logNativeDiagnostic('sendPlatformMessage', 'Format: ' + msgType, 'error: ' + e.message);
             }
         }
 
         return verifyPromise.then(function(opened) {
             if (!opened) {
                 console.warn('[native] No backgrounding signal within ' + verifyMs + 'ms — treating handoff as FAILED.');
+                logNativeDiagnostic('verification', 'No backgrounding after ' + verifyMs + 'ms', 'FAILED');
                 return false;
             }
             console.log('[native] Backgrounding observed — handoff VERIFIED.');
+            logNativeDiagnostic('verification', 'Backgrounding detected', 'VERIFIED');
             // Only on a VERIFIED handoff, and only if the user enabled watched
             // tracking, record + (after delay) mark as watched. No resume-point
             // corruption ever.
