@@ -4622,19 +4622,26 @@ console.log('[community] All 5 community features loaded (#17-#21). Enable in Se
 
     init();
 
-    // DEBUG: Show on-screen indicator that monitoring is active
-    window.addEventListener('hashchange', function() {
-        if (inPlayerRoute()) {
-            var indicator = document.getElementById('__rebuffer-indicator');
+    // DEBUG: Periodic check for monitoring status (every 2 seconds)
+    setInterval(function() {
+        var hash = window.location.hash || '';
+        var inPlayer = hash.indexOf('#/player/') === 0;
+        var indicator = document.getElementById('__rebuffer-indicator');
+
+        if (inPlayer) {
             if (!indicator) {
                 indicator = document.createElement('div');
                 indicator.id = '__rebuffer-indicator';
-                indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,150,0,0.7);color:#fff;padding:8px 12px;border-radius:4px;font-size:12px;z-index:99998;font-family:monospace;';
-                indicator.textContent = '✓ Stall monitor active';
+                indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:rgba(0,150,0,0.8);color:#fff;padding:10px 14px;border-radius:4px;font-size:13px;z-index:99998;font-family:monospace;font-weight:bold;';
+                indicator.innerHTML = '[MONITOR ON]<br/>Hash: ' + hash.substring(0, 20);
                 document.body.appendChild(indicator);
+            } else {
+                indicator.innerHTML = '[MONITOR ON]<br/>Hash: ' + hash.substring(0, 20);
             }
+        } else {
+            if (indicator) indicator.remove();
         }
-    });
+    }, 2000);
 })();
 </script>
 
